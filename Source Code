@@ -1,0 +1,1514 @@
+			              		Expenses Diary
+Register Page:
+                   
+Login Page:
+ 
+Home Page:
+     
+Insert Page:
+          
+
+Display page:
+          
+Search Page:
+          
+
+Total Amount Page:
+     
+
+About Page:
+ 
+      Source Code
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Data.SqlClient;
+using System.Collections;
+using System.Security.Cryptography.X509Certificates;
+using System.Data;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Web.UI.WebControls;
+using System.Web.Security;
+
+namespace protodo.Controllers
+{
+    public class MainController : Controller
+    {
+        
+        public ActionResult newuser()
+        {
+
+
+            SqlConnection con = new SqlConnection("Database=todo;Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Integrated Security=true");
+
+            string firstname = Request.Form["fname"];
+            string lastname = Request.Form["lname"];
+            string gender = Request.Form["radiogroup"];
+            if (string.IsNullOrEmpty(firstname))
+            {
+                Response.Write("");
+                return View();
+
+            }
+            if (string.IsNullOrEmpty(gender))
+            {
+                Response.Write("Please Select Your Gender");
+                return View();
+
+            }
+            string userid = Request.Form["userid"];
+            string password = Request.Form["pass"];
+            string cpassword = Request.Form["cpass"];
+            if (password != cpassword)
+            {
+                TempData["match"]="Password And Comfirm Passwords Are must match";
+                return View();
+
+            }
+            con.Open();
+            string qr1 = "select userid from newuser where userid=@userid";
+            SqlDataAdapter da = new SqlDataAdapter(qr1, con);
+            da.SelectCommand.Parameters.AddWithValue("userid", userid);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            if (dt.Rows.Count > 0)
+            {
+                TempData["alertmessage"] = "User Name Already Taken...";               
+                return View();
+
+            }
+
+            else
+            {
+
+                string qr = "insert into newuser(firstname,lastname,gender,userid,password) values(@firstname,@lastname,@gender,@userid,@password)";
+                SqlCommand cmd = new SqlCommand(qr, con);
+                cmd.Parameters.AddWithValue("firstname", firstname);
+                cmd.Parameters.AddWithValue("lastname", lastname);
+                cmd.Parameters.AddWithValue("gender", gender);
+                cmd.Parameters.AddWithValue("userid", userid);
+                cmd.Parameters.AddWithValue("password", password);
+                cmd.ExecuteNonQuery();
+                TempData["al"] = "inserted Successfully...";
+
+
+            }
+            return View();
+        }
+        public ActionResult login()
+        {           
+           
+                return View();
+        }     
+        public ActionResult logout() 
+        {
+            SqlConnection con = new SqlConnection("Database=todo;Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Integrated Security=true");
+            con.Open();
+            string userid = Request.Form["userid"];            
+            string password = Request.Form["pass"];
+            string qr1 = "select userid,password from newuser where userid=@userid and password=@password";
+            SqlDataAdapter da = new SqlDataAdapter(qr1, con);
+            da.SelectCommand.Parameters.AddWithValue("userid", userid);
+            da.SelectCommand.Parameters.AddWithValue("password", password);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            if (dt.Rows.Count > 0)
+            {
+                return RedirectToAction("Mainpage");
+            }           
+            return View();
+        
+        }
+       public ActionResult Mainpage()
+        {
+            return View();
+        }     
+
+        public ActionResult expences(FormCollection collection)
+        {
+            try
+            {
+                SqlConnection con = new SqlConnection("Database=todo;Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Integrated Security=true");
+                con.Open();
+                string userid = collection["user1"];
+                if(string.IsNullOrEmpty(userid))
+                {
+                    TempData["war"] = "";
+                    return View();
+                }
+                string date = collection["time"];
+                if (string.IsNullOrEmpty(date))
+                {
+                    TempData["war"] = "date not be empty";
+                    return View();
+                }
+                string shopname = Request.Form["shop"];
+                if (string.IsNullOrEmpty(shopname))
+                {
+                    TempData["war"] = "shopname not be empty";
+                    return View();
+                }
+                string things = Request.Form["things"];
+                if (string.IsNullOrEmpty(userid))
+                {
+                    TempData["war"] = "Things not be empty";
+                    return View(); 
+                }
+                string amount = Request.Form["amount"];
+                if (string.IsNullOrEmpty(amount))
+                {
+                    TempData["war"] = "Amount not be empty";
+                    return View();
+                }
+                string reason = Request.Form["reason"];
+                if (string.IsNullOrEmpty(reason))
+                {
+                    TempData["war"] = "Reason not be empty";
+                    return View();
+                }
+                else
+                {
+                    string qr = "insert into expences(userid,buydate,shopname,things,amount,reason) values(@userid,@date,@shopname,@things,@amount,@reason)";
+                    SqlCommand cmd = new SqlCommand(qr, con);
+                    cmd.Parameters.AddWithValue("userid", userid);
+                    cmd.Parameters.AddWithValue("date", date);
+                    cmd.Parameters.AddWithValue("shopname", shopname);
+                    cmd.Parameters.AddWithValue("things", things);
+                    cmd.Parameters.AddWithValue("amount", amount);
+                    cmd.Parameters.AddWithValue("reason", reason);
+                    cmd.ExecuteNonQuery();
+                    TempData["ans"] = "Inserted SuccessFully";
+                    
+                }
+
+                return View();
+               
+            }
+            catch (Exception ex)
+            {
+                TempData["fild"] = "faild"+ex.Message;
+            }
+
+            return View();
+        }
+       public ActionResult About()
+        {
+            return View();
+        }
+        public ActionResult Display(FormCollection collection)
+        {
+            try
+            {
+                string userid = collection["userid"];
+
+                string connectionString = "Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Initial Catalog=todo;Integrated Security=True";
+                string query = "SELECT * FROM expences WHERE userid=@userid";
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@userid", userid);
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        ViewBag.Userdata = dt;
+                        return View();
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "No data found for the given user ID.";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "An error occurred: " + ex.Message;
+            }
+
+            return View();
+        }
+
+        public ActionResult search(FormCollection collection)
+        {
+            try
+            {
+                string userid = collection["userid"];
+                string fromdate = Request.Form["fromdate"];
+                string todate = Request.Form["todate"];
+                string shopname = Request.Form["shopname"];                
+
+                string connectionString = "Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Initial Catalog=todo;Integrated Security=True";
+                string query = "select*from expences where userid='alwin123' and buydate >=@fromdate and buydate <=@todate or shopname=@shopname";
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@userid", userid);
+                    cmd.Parameters.AddWithValue("@fromdate", fromdate);
+                    cmd.Parameters.AddWithValue("@todate", todate);
+                    cmd.Parameters.AddWithValue("@shopname", shopname);
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        ViewBag.Userdata = dt;
+                        return View();
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "No data found for the given user ID.";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = "An error occurred: " + ex.Message;
+            }
+
+
+            return View();
+        }
+        public ActionResult totalamount(FormCollection collection)
+        {
+            try
+            {
+                string userid = collection["userid"];
+                string fromdate = Request.Form["fromdate"];
+                string todate = Request.Form["todate"];
+
+                string connectionString = "Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Initial Catalog=todo;Integrated Security=True";
+                string query = "select sum(amount) from expences where userid=@userid and buydate>=@fromdate and buydate<=@todate";
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@userid", userid);
+                    cmd.Parameters.AddWithValue("@fromdate", fromdate);
+                    cmd.Parameters.AddWithValue("@todate", todate);
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        ViewBag.Userdata = dt;
+                        return View();
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "No data found for the given user ID.";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+               
+            }
+
+            return View();
+        }
+       
+        public ActionResult total(FormCollection collection,string button)
+        {
+            try
+            {
+                string userid = collection["userid"];               
+
+                string connectionString = "Data Source=DESKTOP-4JAHEO9\\SQLEXPRESS;Initial Catalog=todo;Integrated Security=True";
+                string query = "select sum(amount) from expences where userid=@userid";
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand(query, con);
+                    cmd.Parameters.AddWithValue("@userid", userid);                  
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        ViewBag.Userdata = dt;
+                        return View();
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = "No data found for the given user ID.";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return View();
+        }
+        
+
+
+    }
+
+
+}
+
+Model:
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace protodo.Models
+{
+    public class Expenses
+    {
+        public int UserID { get; set; }
+        public string BuyDate { get; set; }
+
+        public string ShopName { get; set; }
+
+        public string Things { get; set; }
+
+        public string Amount { get; set; }
+        public string Reason { get; set; }
+    }
+}
+
+New User:
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Register</title>
+    
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+        .box1 {
+            background-color: rgba(0,0,0,.5);
+            color: #fff;
+        }
+
+        .box2 {
+            background-color: #000;
+            color: #fff;
+            opacity: .5;
+        }
+
+        .top1 {
+            position: relative;
+            top: 50px;
+        }
+
+        .top2 {
+            justify-content: center;
+            top: 300px;
+        }
+
+        body {
+            background-image: url('../../images/w2.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body>
+    <form action="newuser" method="post">
+
+        <div class="text-warning">
+            @TempData["alertmessage"]
+        </div>
+        <div class="text-success">
+            @TempData["al"]
+        </div>
+        <div class="text-danger">
+            @TempData["match"]
+        </div>
+
+        <div class=" row ">
+            <div class="offset-lg-2 col-lg-8 box2 top1">
+                <div class="container ">
+                    <div class="row justify-content-center" style="padding:70px 0px 0px 0px">
+                        <div class="col-10 col-lg-8">
+                            <input type="text" id="uesername" name="fname" class="form-control text-center" placeholder="Enter Your FirstName" required>
+                            <label for="uesername" class="text-white" style="font-size: 15px; ">First Name</label>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-10 col-lg-8">
+                            <input type="text" id="lastname" name="lname" class="form-control" style="text-align: center;"
+                                   placeholder="Enter Your Last Name" required>
+                            <label for="lastname">Last Name</label>
+                        </div>
+                    </div>
+                    <div style="padding: 19px;">
+                        <div class="row">
+                            <div class="col-2 offset-1 col-lg-2 offset-lg-3">
+                                <label>Gender</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row ">
+                        <div class="col-2 offset-3 col-lg-2 offset-lg-4 ">
+                            <div class="form-check">
+                                <input type="radio" id="Male" name="radiogroup" value="Male" class="offset-2  col-1 form-check-input"
+                                       checked><label for="Male">Male</label>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <div class="form-check ">
+                                <input type="radio" id="female" name="radiogroup" value="Female"
+                                       class="offset-1  col-1 form-check-input "><label for="femlae">Female</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-10 col-lg-8">
+                            <input type="text" id="uesername" name="userid" class="form-control text-center" placeholder="Enter Your UserId" required>
+                            <label for="uesername" class="text-white" style="font-size: 15px; ">UserId</label>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-10 col-lg-8">
+                            <input type="password" id="password" name="pass" class="form-control text-center" placeholder="Enter Your password" required>
+                            <label for="password" class="text-white" style="font-size: 15px; ">Password</label>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-10 col-lg-8">
+                            <input type="password" id="uesername" name="cpass" class="form-control text-center" placeholder="Enter Your Password" required>
+                            <label for="uesername" class="text-white" style="font-size: 15px; ">Confirm Password</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <input type="submit" class="btn btn-primary col-3 offset-4" value="Submit">
+
+                        <label>Go To LogIn Page<a href="@Url.Action("login")">Click</a></label>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</body>
+</html>
+
+Login Cshtml:
+
+@{
+    Layout = null;
+    
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Log In</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        body {
+            background-image: url('../../images/w8.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+        }
+    </style>
+</head>
+
+<body>
+    <form action="logout" method="post">   
+        <div>
+            <h2 style="color:white";>@TempData["al"]</h2>
+        </div>
+                    <div style="top:100px; position: relative; ">
+                <div class="container">
+                    <div class="row justify-content-center" style="padding: 15px 0px;">
+                        <div class="col-sm-7 col-lg-6">
+                            <input type="text" id="username" name="userid" class="form-control text-center" placeholder="Enter Your UserId here">
+                            <label for="uesername" class="text-white" style="font-weight: bold;font-size: 20px; ">Username</label>
+                        </div>                        
+                    </div>
+                    <div class="row justify-content-center" style="padding: 15px;">
+                        <div class="col-sm-7 col-lg-6 ">
+                            <input type="password"  id="passs" name="pass" class="form-control text-center" placeholder="Enter Your Password here">
+                            <label for="pass" class="text-white" style="font-weight: bold;font-size: 20px;">Password</label>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center " style="padding: 15px;">
+
+                        <input type="submit"  value="Sign In" class="btn btn-primary col-3 col-lg-2 " onclick="per()" />
+
+                    </div>
+                    <div class="row text-center " style="padding: 15px;">
+                        <label class="text-white" style="font-weight: bold;font-size: 20px;">If You Are New User Click<a href="@Url.Action("newuser")">Register</a></label>
+
+                    </div>
+                </div>
+            </div>
+
+    </form>
+
+    <script>
+
+        function per() {
+            var getvalue = document.getElementById("username").value;
+            localStorage.setItem('value1', getvalue);
+        }
+
+    </script>
+</body>
+</html>
+
+About:
+
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>About</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w5.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-white ">
+                <a href="" class="navbar-brand ">Todo List</a>
+                <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse " id="mynav">
+                    <ul class="navbar-nav left ">
+                        <li class="nav-item">
+                            <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("search")" class="nav-link">Search</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("About")" class="nav-link">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                        </li>
+
+                    </ul>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row justify-content-center display-6" style="padding: 100px 0px 0px 0px;">
+            <div class="col-10">
+                <p>
+                    Welcome to Expenses Diary Entery    ! We're here to simplify the way you manage your finances and track your
+                    expenses effectively. Whether you're a seasoned budgeting pro or just starting to take control of
+                    your spending habits, our platform is designed to empower you on your financial journey.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+</html>
+
+Main Page:
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w2.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+
+
+
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-white ">
+                <a href="" class="navbar-brand ">Todo List</a>
+                <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse " id="mynav">
+                    <ul class="navbar-nav left ">
+                        <li class="nav-item">
+                            <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("search")" class="nav-link">Search</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("About")" class="nav-link">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                        </li>
+                    </ul>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+    <div class="row">
+        <div class="col-8 offset-2 col-lg-8 offset-3 " style="padding: 100px 0px 0px 0px;">
+            <span class="display-2 ani">
+                Track Every Penny. Your Daily Expense Diary and More...!
+
+            </span>
+        </div>
+    </div>
+
+
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+</body>
+</html>
+
+
+Display:
+@model protodo.Models.Expenses
+@using System.Data
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Display</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>    
+
+        .max {
+            max-width: 150px;
+            word-wrap: break-word;
+        }
+
+
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w7.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            position: sticky;
+            background-attachment: fixed;
+        }
+        .td{
+            font-size:large;
+        }
+    </style>
+</head>
+<body>
+    <form action="Display" method="post">
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-white">
+                    <a href="" class="navbar-brand ">Todo List</a>
+                    <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                    <div class="collapse navbar-collapse " id="mynav">
+                        <ul class="navbar-nav left ">
+                            <li class="nav-item">
+                                <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("search")" class="nav-link">Search</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("About")" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <div class="container">
+            <div class="row justify-content-center" style="padding: 15px ;">
+                <div class="col-sm-7 col-lg-6">
+                    <input type="text" id="user1" name="userid" class="form-control text-center"
+                            readonly>
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Your UserID</label>
+                    <label for="" id="error" class="text-danger"></label>
+                </div>
+            </div>
+            <div class="row justify-content-center " style="padding: 15px;">
+
+                <input type="submit" value="Submit" class="btn btn-primary col-3 col-lg-2 " />
+
+            </div>
+            <div style="text-align: center;padding: 100px 0px 0px 0px ;">
+                <span class="display-4 text-dark">Your Data's </span>
+            </div>
+            <div class="row justify-content-center" style="padding:40px 0px 0px 0px ;">
+                <div class="col-10 table-responsive">
+                    <table class="table table-bordered table-hover " border="1">
+                        <thead class="">
+                            <tr>
+                                <th>Shop Name</th>
+                                <th>Things</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @{
+                                if (ViewBag.UserData != null)
+                                {
+                                    foreach (DataRow row in ViewBag.UserData.Rows)
+                                    {
+                                                        <tr>                                                            
+                                                            <td>@row["ShopName"]</td>
+                                                            <td>@row["Things"]</td>
+                                                            <td>@row["Amount"]</td>
+                                                            <td>@row["Reason"]</td>
+                                                            <td>@row["BuyDate"]</td>
+                                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        window.onload = function () {
+            var v2 = localStorage.getItem('value1');
+            if (v2 !== null) {
+                document.getElementById('user1').value = v2;
+
+            }
+        }
+    </script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+</html>
+
+
+Insert Data:
+
+@{
+    Layout = null;
+      
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insert Expences</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w6.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+
+<body>
+    <form action="expences" method="post">
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-white ">
+                    <a href="" class="navbar-brand ">Todo List</a>
+                    <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                    <div class="collapse navbar-collapse " id="mynav">
+                        <ul class="navbar-nav left ">
+                            <li class="nav-item">
+                                <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("search")" class="nav-link">Search</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("About")" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <h2 class="text-success">@TempData["ans"]</h2>
+        <h2 class="text-waring">@TempData["war"]</h2>
+        <h2 class="text-danger">@TempData["fild"]</h2>
+        <div style="padding: 10px 0px 0px 0px;">
+            <div class="container">
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="text" id="user1" name="user1" class="form-control text-center"
+                               placeholder="" value="v" readonly>
+                        <label for="user1" class="" style="font-weight: bold;font-size: 20px; ">User Id</label>
+
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="text" id="time" name="time" class="form-control text-center"
+                               placeholder="Enter Your Date" required>
+                        <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Date and Time</label>
+                        <label for="" id="error" class="text-danger"></label>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="text" id="shop" name="shop" class="form-control text-center"
+                               placeholder="Enter Your Shop Name" required>
+                        <label for="shop" class="" style="font-weight: bold;font-size: 20px; ">Shop Name</label>
+                        <label for="" id="error1" class="text-danger"></label>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="text" id="things" name="things" class="form-control text-center"
+                               placeholder="Enter Your Things" required>
+                        <label for="things" class="" style="font-weight: bold;font-size: 20px; ">Things</label>
+                        <label for="" id="error2" class="text-danger"></label>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="number" id="amount" name="amount" class="form-control text-center"
+                               placeholder="Enter Your Amount" required>
+                        <label for="amount" class="" style="font-weight: bold;font-size: 20px; ">Amount</label>
+                        <label for="" id="error3" class="text-danger"></label>
+                    </div>
+                </div>
+                <div class="row justify-content-center" style="padding: 15px ;">
+                    <div class="col-sm-7 col-lg-6">
+                        <input type="text" id="reason" name="reason" class="form-control text-center"
+                               placeholder="Enter Your Reason" required>
+                        <label for="uesername" class="" style="font-weight: bold;font-size: 20px; ">Reason</label>
+                        <label for="" id="error4" class="text-danger"></label>
+                    </div>
+                </div>
+                <div class="row justify-content-center " style="padding: 15px;">
+
+                    <button type="submit" class="btn btn-primary col-3 col-lg-2 " onclick="act()">Submit</button>
+                </div>
+
+
+            </div>
+        </div>
+    </form>
+
+    <script>
+        window.onload = function () {
+            var v2 = localStorage.getItem('value1');
+            if (v2 !== null) {
+                document.getElementById('user1').value = v2;
+
+            }
+        }
+    </script>
+    <script>
+        var date1 = new Date();
+        var formatdate = date1.toLocaleDateString();
+        document.getElementById("time").value = formatdate;
+    </script>
+    
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+
+</html>
+
+Search:    
+@model protodo.Models.Expenses
+
+@using System.Data
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Search</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        thead {
+            background-color: blue;
+        }
+
+
+
+
+        .max {
+            max-width: 150px;
+            word-wrap: break-word;
+        }
+
+
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w2.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            position: sticky;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body>
+    <form action="search" method="post">
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-white">
+                    <a href="" class="navbar-brand ">Todo List</a>
+                    <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                    <div class="collapse navbar-collapse " id="mynav">
+                        <ul class="navbar-nav left ">
+                            <li class="nav-item">
+                                <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("search")" class="nav-link">Search</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("About")" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <h2 class="text-warning">@TempData["war"]</h2>
+        <div class="container">
+
+            <div class="row justify-content-center" style="padding: 15px ;">
+                <div class="col-sm-7 col-lg-6">
+                    <input type="text" id="user1" name="userid" class="form-control text-center"
+                           placeholder="" readonly>
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Your UserId</label>
+
+                </div>
+            </div>
+            <div class="row justify-content-center" style="padding: 15px ;">
+                <div class="col-4 col-lg-4">
+                    <input type="date" id="fromdate" name="fromdate" class="form-control text-center"
+                           placeholder="Enter Your From Date">
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; "> From Date</label>
+                    <label for="" id="error" class="text-danger"></label>
+                </div>
+
+
+                <div class="col-4 col-lg-4">
+                    <input type="date" id="todate" name="todate" class="form-control text-center"
+                           placeholder="Enter Your To Date">
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; ">To Date</label>
+                    <label for="" id="error" class="text-danger"></label>
+                </div>
+                <div class="col-4 col-lg-4">
+                    <input type="text" id="shopname" name="shopname" class="form-control text-center"
+                           placeholder="If You Want">
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Shop Name</label>
+                    <label for="" id="error" class="text-danger"></label>
+                </div>
+            </div>
+
+            <div class="row justify-content-center " style="padding: 15px;">
+
+                <input type="submit" value="Submit" class="btn btn-primary col-3 col-lg-2 " />
+
+            </div>
+            <div style="text-align: center;padding: 100px 0px 0px 0px ;">
+                <span class="display-4 text-dark">Your Data's </span>
+            </div>
+            <div class="row justify-content-center " style="padding:40px 0px 0px 0px ;">
+                <div class="col-10 table-responsive">
+                    <table class="table table-bordered table-hover ">
+                        <thead>
+                            <tr>
+                                <th>Shop Name</th>
+                                <th>Things</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+
+
+                        <tbody>
+                            @{
+                                if (ViewBag.UserData != null)
+                                {
+                                    foreach (DataRow row in ViewBag.UserData.Rows)
+                                    {
+                                        <tr>
+                                            <td>@row["ShopName"]</td>
+                                            <td>@row["Things"]</td>
+                                            <td>@row["Amount"]</td>
+                                            <td>@row["Reason"]</td>
+                                            <td>@row["BuyDate"]</td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        window.onload = function () {
+            var v2 = localStorage.getItem('value1');
+            if (v2 !== null) {
+                document.getElementById('user1').value = v2;
+
+            }
+        }
+    </script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+</html>
+
+
+Totoal amount;
+@model protodo.Models.Expenses
+@using System.Data
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>totalamount</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w2.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            position: sticky;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body>
+    <form action="totalamount" method="post">
+    <header>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-white">
+                <a href="" class="navbar-brand ">Todo List</a>
+                <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse " id="mynav">
+                    <ul class="navbar-nav left ">
+                        <li class="nav-item">
+                            <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("search")" class="nav-link">Search</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("About")" class="nav-link">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                        </li>
+
+                    </ul>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row justify-content-center" style="padding: 15px ;">
+            <div class="col-sm-7 col-lg-6">
+                <input type="text" id="user1" name="userid" class="form-control text-center"
+                       placeholder="" readonly>
+                <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Your UserId</label>
+
+            </div>
+        </div>
+        <div class="row justify-content-center " style="padding:5px;">
+
+            <label class="col-11 col-lg-8 offset-1 offset-lg-3 ">If You Want to See Uptodate Total Amount<a class="" href="@Url.Action("total")">Clickme</a></label>
+
+        </div>
+        <div class="row justify-content-center" style="padding: 15px ;">
+            <div class="col-4 col-lg-4">
+                <input type="date" id="fromdate" name="fromdate" class="form-control text-center"
+                       placeholder="Enter Your From Date" required>
+                <label for="time" class="" style="font-weight: bold;font-size: 20px; "> From Date</label>
+                <label for="" id="error" class="text-danger"></label>
+            </div>
+
+
+            <div class="col-4 col-lg-4">
+                <input type="date" id="todate" name="todate" class="form-control text-center"
+                       placeholder="Enter Your To Date" required>
+                <label for="time" class="" style="font-weight: bold;font-size: 20px; ">To Date</label>
+                <label for="" id="error" class="text-danger"></label>
+            </div>
+        </div>
+
+        <div class="row justify-content-center " style="padding: 15px;">
+
+            <input type="submit" value="Submit" class="btn btn-primary col-3 col-lg-2 " />
+
+        </div>
+        <div class="row justify-content-center">
+
+            @if (ViewBag.Userdata != null)
+            {
+                <span class="col-8 col-lg-4 offset-lg-2" style="font-size:30px;">Total Amount: @ViewBag.Userdata.Rows[0][0] Rs.</span>
+            }
+            else
+            {
+                <h1>@ViewBag.ErrorMessage</h1>
+            }
+
+        </div>
+
+    </div>
+    </form>
+
+    <script>
+    window.onload = function () {
+        var v2 = localStorage.getItem('value1');
+        if (v2 !== null) {
+            document.getElementById('user1').value = v2;
+
+        }
+    }
+    </script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+</html>
+
+Overall Totoal:
+@model protodo.Models.Expenses
+
+@using System.Data
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>totalamount</title>
+    <link rel="stylesheet" href="~/Content/bootstrap.min.css" />
+    <style>
+        .left {
+            margin-left: auto;
+            text-align: center;
+            padding: 25px;
+            font-size: 25px;
+            background-color: transparent;
+            color: white;
+        }
+
+        body {
+            background-image: url('../../images/w2.jpg');
+            background-size: cover;
+            height: 100vh;
+            background-position: center;
+            position: sticky;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body>
+    <form action="total" method="post">
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-white">
+                    <a href="" class="navbar-brand ">Todo List</a>
+                    <button type="button" data-bs-target="#mynav" data-bs-toggle="collapse" class="navbar-toggler"><span class="navbar-toggler-icon"></span></button>
+                    <div class="collapse navbar-collapse " id="mynav">
+                        <ul class="navbar-nav left ">
+                            <li class="nav-item">
+                                <a href="@Url.Action("Mainpage")" class="nav-link">Home</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="@Url.Action("expences")" class="nav-link">Data</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("search")" class="nav-link">Search</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Display")" class="nav-link">Display</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("About")" class="nav-link">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("totalamount")" class="nav-link">Total</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("login")" class="nav-link">Logout</a>
+                            </li>
+
+                        </ul>
+
+                    </div>
+                </nav>
+            </div>
+        </header>
+        <div class="container">
+            <div class="row justify-content-center" style="padding: 15px ;">
+                <div class="col-sm-7 col-lg-6">
+                    <input type="text" id="user1" name="userid" class="form-control text-center"
+                           placeholder="" readonly>
+                    <label for="time" class="" style="font-weight: bold;font-size: 20px; ">Your UserId</label>
+
+                </div>
+            </div>
+            
+
+            <div class="row justify-content-center " style="padding: 15px;">
+                <input type="submit" value="Submit" class="btn btn-primary col-3 col-lg-2 " />
+
+            </div>
+            <div class="row justify-content-center">
+
+                @if (ViewBag.Userdata != null)
+                {
+                    <span class="col-8 col-lg-4 offset-lg-1" style="font-size:30px;">Total Amount: @ViewBag.Userdata.Rows[0][0] Rs.</span>
+                }
+                else
+                {
+                    <h1>@ViewBag.ErrorMessage</h1>
+                }
+
+            </div>
+
+        </div>
+    </form>
+
+    <script>
+    window.onload = function () {
+        var v2 = localStorage.getItem('value1');
+        if (v2 !== null) {
+            document.getElementById('user1').value = v2;
+
+        }
+    }
+    </script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+</body>
+</html>
+
+
+
